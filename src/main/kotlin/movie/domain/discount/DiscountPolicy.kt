@@ -42,7 +42,7 @@ class DiscountPolicy(
         totalPrice: Price,
         startTime: LocalTime,
     ): Price {
-        if (discountCondition.isTime(startTime = startTime)) {
+        if (discountCondition.isDiscountTime(startTime = startTime)) {
             val discountPrice = Price(2000)
 
             return totalPrice.minusPrice(discountPrice)
