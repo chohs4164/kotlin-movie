@@ -4,7 +4,7 @@ import movie.domain.Point
 import movie.domain.Price
 import movie.domain.movie.Reservation
 import movie.domain.movie.ScreeningMovie
-import movie.domain.movie.Ticket
+import movie.domain.movie.ReservationCart
 
 object OutputView {
     fun printErrorMessage(message: String?) {
@@ -69,10 +69,10 @@ object OutputView {
         printReservations(reservation)
     }
 
-    fun printCart(ticket: Ticket) {
+    fun printCart(reservationCart: ReservationCart) {
         println("장바구니")
 
-        val reservations = ticket.getReservations()
+        val reservations = reservationCart.getReservations()
         reservations.forEach {
             printReservations(it)
         }
@@ -84,14 +84,14 @@ object OutputView {
     }
 
     fun printReceipt(
-        ticket: Ticket,
+        reservationCart: ReservationCart,
         paymentPrice: Price,
         usePoint: Point,
     ) {
         println("\n예매 완료")
         println("내역:")
 
-        val reservations = ticket.getReservations()
+        val reservations = reservationCart.getReservations()
         reservations.forEach {
             printReservations(it)
         }

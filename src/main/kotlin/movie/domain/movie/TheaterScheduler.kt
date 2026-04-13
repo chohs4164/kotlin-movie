@@ -37,7 +37,7 @@ class TheaterScheduler(
                 theater = theater,
                 movieTime = movieTime,
             ),
-        ) { throw IllegalArgumentException("시간 중복으로 영화를 추가할 수 없습니다.") }
+        ) { "시간 중복으로 영화를 추가할 수 없습니다." }
 
         val newMovie =
             createScreeningMovie(

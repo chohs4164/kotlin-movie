@@ -4,7 +4,7 @@ import movie.MovieFixtures
 import movie.domain.Point
 import movie.domain.movie.MovieTitle
 import movie.domain.movie.ScreeningMovie
-import movie.domain.movie.Ticket
+import movie.domain.movie.ReservationCart
 import movie.domain.payment.Card
 import movie.domain.payment.Cash
 import movie.domain.payment.PaymentMethod
@@ -13,7 +13,6 @@ import movie.view.InputParser
 import movie.view.InputValidator
 import movie.view.InputView
 import movie.view.OutputView
-import org.springframework.aot.hint.TypeReference.listOf
 import java.time.LocalDate
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -26,17 +25,17 @@ class MovieController {
 
         require(isStart) { return }
 
-        val ticket = Ticket()
+        val reservationCart = ReservationCart()
 
         while (true) {
             val movieTitle = getMovieTitle()
             val movieTimes = getMovieTimes(title = movieTitle)
             OutputView.printMovieStartTimes(movieTimes)
-            val screeningMovie = getScreeningMovie(movieTimes, ticket)
+            val screeningMovie = getScreeningMovie(movieTimes, reservationCart)
             OutputView.printSeats(screeningMovie = screeningMovie)
             val selectedSeatNumbers = getSeatNumbers(screeningMovie = screeningMovie)
             val reservation =
-                ticket.addReservation(
+                reservationCart.addReservation(
                     screeningMovie = screeningMovie,
                     seatNumbers = selectedSeatNumbers,
                 )
@@ -44,9 +43,9 @@ class MovieController {
             require(getContinueReservation()) { break }
         }
 
-        OutputView.printCart(ticket = ticket)
+        OutputView.printCart(reservationCart = reservationCart)
 
-        var totalPrice = ticket.calculateDiscountedTotalPrice(movieFixtures.discountPolicy)
+        var totalPrice = reservationCart.calculateDiscountedTotalPrice(movieFixtures.discountPolicy)
 
         val point = getUsePoint()
         val paymentMethod = getPaymentMethod()
@@ -60,10 +59,10 @@ class MovieController {
 
         val isPayment = getUserPayment()
 
-        require(isPayment) { ticket.resetSeat() }
+        require(isPayment) { reservationCart.resetSeat() }
 
         OutputView.printReceipt(
-            ticket = ticket,
+            reservationCart = reservationCart,
             paymentPrice = paymentPrice,
             usePoint = point,
         )
@@ -107,7 +106,7 @@ class MovieController {
 
     fun getScreeningMovie(
         screeningMovies: List<ScreeningMovie>,
-        ticket: Ticket,
+        reservationCart: ReservationCart,
     ): ScreeningMovie =
         whileGetInput {
             val input = InputView.readSelectedMovieTimeNumber()
@@ -116,7 +115,7 @@ class MovieController {
             val index = InputParser.parseIndex(input = input, size = screeningMovies.size)
             val selectedMovie = screeningMovies[index]
 
-            require(!ticket.isDupTime(selectedMovie.movieTime)) { throw IllegalArgumentException("선택하신 상영 시간이 겹칩니다. 다른 시간을 선택해 주세요.") }
+            require(!reservationCart.isDupTime(selectedMovie.movieTime)) { throw IllegalArgumentException("선택하신 상영 시간이 겹칩니다. 다른 시간을 선택해 주세요.") }
 
             selectedMovie
         }

@@ -4,7 +4,7 @@ import movie.domain.Price
 import movie.domain.discount.DiscountPolicy
 import movie.domain.seat.number.SeatNumber
 
-class Ticket(
+class ReservationCart(
     private val reservations: Reservations = Reservations(),
 ) {
     fun calculateDiscountedTotalPrice(discountPolicy: DiscountPolicy): Price = reservations.calculateDiscountedTotalPrice(discountPolicy)
