@@ -11,14 +11,14 @@ class ScreeningMovie(
     val movieTime: MovieTime,
     reservedSeats: List<SeatNumber> = emptyList(),
 ) {
-    private val ScreeningMovie = reservedSeats.toMutableList()
+    private val Screening = reservedSeats.toMutableList()
 
     fun addReservedSeats(seatNumbers: List<SeatNumber>) {
-        ScreeningMovie.addAll(seatNumbers)
+        Screening.addAll(seatNumbers)
     }
 
     fun deleteReservedSeats(seatNumbers: List<SeatNumber>) {
-        ScreeningMovie.removeAll(seatNumbers)
+        Screening.removeAll(seatNumbers)
     }
 
     fun reserve(targetSeatNumbers: List<SeatNumber>) {
@@ -26,13 +26,13 @@ class ScreeningMovie(
             reserveCheck(it)
         }
 
-        ScreeningMovie.addAll(targetSeatNumbers)
+        Screening.addAll(targetSeatNumbers)
     }
 
     fun reserveCheck(seatNumber: SeatNumber) {
         require(theater.validateSeat(seatNumber)) { "존재하지 않는 좌석입니다." }
 
-        require(!ScreeningMovie.contains(seatNumber)) { throw IllegalArgumentException("이미 예약된 좌석입니다.") }
+        require(!Screening.contains(seatNumber)) { throw IllegalArgumentException("이미 예약된 좌석입니다.") }
     }
 
     fun calculatePrice(targetSeatNumbers: List<SeatNumber>): Price =
@@ -42,7 +42,7 @@ class ScreeningMovie(
                 price.sumPrice(targetPrice = targetPrice)
             }
 
-    fun isReserved(seatNumber: SeatNumber) = ScreeningMovie.contains(seatNumber)
+    fun isReserved(seatNumber: SeatNumber) = Screening.contains(seatNumber)
 
-    fun isAbleReservation(seatNumbers: List<SeatNumber>): Boolean = seatNumbers.any { ScreeningMovie.contains(it) }
+    fun isAbleReservation(seatNumbers: List<SeatNumber>): Boolean = seatNumbers.any { Screening.contains(it) }
 }
