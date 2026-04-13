@@ -9,7 +9,9 @@ class MovieTime(
     val endTime: LocalTime,
 ) {
     fun checkDuplicate(movieTime: MovieTime): Boolean {
-        require(date == movieTime.date) { return false }
+        if (date != movieTime.date) {
+            return false
+        }
 
         return (movieTime.startTime in startTime..endTime) && (movieTime.endTime in startTime..endTime)
     }
