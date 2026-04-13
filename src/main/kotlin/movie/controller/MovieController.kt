@@ -13,6 +13,7 @@ import movie.view.InputParser
 import movie.view.InputValidator
 import movie.view.InputView
 import movie.view.OutputView
+import org.springframework.aot.hint.TypeReference.listOf
 import java.time.LocalDate
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -154,7 +155,7 @@ class MovieController {
 
     fun getPaymentMethod(): PaymentMethod =
         whileGetInput {
-            val paymentMethods = listOf(Cash(), Card())
+            val paymentMethods = listOf(Cash, Card)
             val input = InputView.readPaymentType(paymentMethods)
             InputValidator.validateNumber(input)
 
