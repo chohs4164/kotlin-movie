@@ -1,5 +1,6 @@
 package movie
 
+import movie.domain.discount.DefaultDiscountCondition
 import movie.domain.discount.DiscountPolicy
 import movie.domain.movie.Movie
 import movie.domain.movie.MovieTime
@@ -70,7 +71,8 @@ class MovieFixtures {
             screeningMovies = screeningMovies,
         )
 
-    val discountPolicy = DiscountPolicy()
+    val discountCondition = DefaultDiscountCondition()
+    val discountPolicy = DiscountPolicy(discountCondition)
     val payment = Payment()
     val pointPolicy = PointPolicy()
 }
