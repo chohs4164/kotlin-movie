@@ -3,8 +3,8 @@ package movie.view
 import movie.domain.Point
 import movie.domain.Price
 import movie.domain.movie.Reservation
-import movie.domain.movie.ReservationCart
 import movie.domain.movie.ScreeningMovie
+import movie.domain.movie.ReservationCart
 
 object OutputView {
     fun printErrorMessage(message: String?) {

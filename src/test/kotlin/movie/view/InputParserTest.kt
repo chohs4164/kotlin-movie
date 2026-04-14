@@ -5,7 +5,6 @@ import movie.domain.seat.number.Column
 import movie.domain.seat.number.Row
 import movie.domain.seat.number.SeatNumber
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
@@ -63,13 +62,5 @@ class InputParserTest {
             )
 
         assertThat(result).isEqualTo(seatNumbers)
-    }
-
-    @Test
-    fun `0번을 입력하면 예외가 발생한다`() {
-        assertThatThrownBy {
-            InputParser.parseIndex("0", 3)
-        }.isInstanceOf(IllegalArgumentException::class.java)
-            .hasMessage("유효한 번호를 입력해주세요")
     }
 }

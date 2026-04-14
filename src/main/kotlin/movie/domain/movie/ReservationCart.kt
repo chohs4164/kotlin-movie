@@ -21,8 +21,6 @@ class ReservationCart(
         screeningMovie: ScreeningMovie,
         seatNumbers: List<SeatNumber>,
     ): Reservation {
-        screeningMovie.reserve(seatNumbers)
-
         val reservation =
             Reservation(
                 screeningMovie = screeningMovie,
@@ -30,6 +28,7 @@ class ReservationCart(
             )
 
         reservations.addReservation(reservation)
+        screeningMovie.addReservedSeats(seatNumbers)
 
         return reservation
     }

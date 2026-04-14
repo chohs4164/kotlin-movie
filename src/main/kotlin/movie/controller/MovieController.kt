@@ -3,14 +3,12 @@ package movie.controller
 import movie.MovieFixtures
 import movie.domain.Point
 import movie.domain.movie.MovieTitle
-import movie.domain.movie.ReservationCart
 import movie.domain.movie.ScreeningMovie
+import movie.domain.movie.ReservationCart
 import movie.domain.payment.Card
 import movie.domain.payment.Cash
 import movie.domain.payment.PaymentMethod
 import movie.domain.seat.number.SeatNumber
-import movie.infrastructure.db.JdbcReservationRepository
-import movie.infrastructure.db.JdbcScreeningRepository
 import movie.view.InputParser
 import movie.view.InputValidator
 import movie.view.InputView
@@ -19,11 +17,9 @@ import java.time.LocalDate
 import kotlin.uuid.ExperimentalUuidApi
 
 @OptIn(ExperimentalUuidApi::class)
-class MovieController(
-    private val screeningRepository: JdbcScreeningRepository,
-    private val reservationRepository: JdbcReservationRepository,
-    private val movieFixtures: MovieFixtures = MovieFixtures(),
-) {
+class MovieController {
+    val movieFixtures = MovieFixtures()
+
     fun run() {
         val isStart = getReservationStart()
 
@@ -63,18 +59,7 @@ class MovieController(
 
         val isPayment = getUserPayment()
 
-        if (!isPayment) {
-            reservationCart.resetSeat()
-            return
-        }
-
-        try {
-            reservationRepository.saveAll(reservationCart.getReservations())
-        } catch (e: IllegalArgumentException) {
-            OutputView.printErrorMessage(e.message)
-            reservationCart.resetSeat()
-            return
-        }
+        require(isPayment) { reservationCart.resetSeat() }
 
         OutputView.printReceipt(
             reservationCart = reservationCart,
@@ -89,10 +74,7 @@ class MovieController(
         whileGetInput {
             val date = getDate()
 
-            val screeningMovies = screeningRepository.findByTitleAndDate(title, date)
-            require(screeningMovies.isNotEmpty()) { "날짜가 올바르지 않습니다." }
-
-            screeningMovies
+            movieFixtures.scheduler.getMovies(title = title, date = date)
         }
 
     fun getReservationStart(): Boolean =
@@ -109,7 +91,7 @@ class MovieController(
 
             val movieTitle = InputParser.parseMovieTitle(input)
 
-            require(screeningRepository.existsByTitle(movieTitle)) { "상영 중인 영화가 아닙니다." }
+            require(movieFixtures.scheduler.containsMovieTitle(movieTitle)) { "상영 중인 영화가 아닙니다." }
 
             movieTitle
         }
@@ -133,11 +115,7 @@ class MovieController(
             val index = InputParser.parseIndex(input = input, size = screeningMovies.size)
             val selectedMovie = screeningMovies[index]
 
-            require(!reservationCart.isDupTime(selectedMovie.movieTime)) {
-                throw IllegalArgumentException(
-                    "선택하신 상영 시간이 겹칩니다. 다른 시간을 선택해 주세요.",
-                )
-            }
+            require(!reservationCart.isDupTime(selectedMovie.movieTime)) { throw IllegalArgumentException("선택하신 상영 시간이 겹칩니다. 다른 시간을 선택해 주세요.") }
 
             selectedMovie
         }
