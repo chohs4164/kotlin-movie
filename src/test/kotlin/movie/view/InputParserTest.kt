@@ -70,6 +70,6 @@ class InputParserTest {
         assertThatThrownBy{
             InputParser.parseIndex("0",3)
         }.isInstanceOf(IllegalArgumentException::class.java)
-            .hasMessage("유요한 번호를 입력해주세요")
+            .hasMessage("유효한 번호를 입력해주세요")
     }
 }
