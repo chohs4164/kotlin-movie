@@ -10,6 +10,7 @@ class ScreeningMovie(
     val movie: Movie,
     val movieTime: MovieTime,
     reservedSeats: List<SeatNumber> = emptyList(),
+    val screeningId: String? = null,
 ) {
     private val Screening = reservedSeats.toMutableList()
 
@@ -44,5 +45,6 @@ class ScreeningMovie(
 
     fun isReserved(seatNumber: SeatNumber) = Screening.contains(seatNumber)
 
-    fun isAbleReservation(seatNumbers: List<SeatNumber>): Boolean = seatNumbers.any { Screening.contains(it) }
+    fun isAbleReservation(seatNumbers: List<SeatNumber>): Boolean =
+        seatNumbers.any { Screening.contains(it) }
 }

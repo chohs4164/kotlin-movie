@@ -161,8 +161,10 @@ class JdbcScreeningRepository(
     }
 
     @OptIn(ExperimentalUuidApi::class)
-    private fun ResultSet.toScreeningMovie(): ScreeningMovie =
-        ScreeningMovie(
+    private fun ResultSet.toScreeningMovie(): ScreeningMovie {
+        val screeningId = getString("screening_id")
+
+        return ScreeningMovie(
             theater =
                 Theater(
                     openTime = getObject("open_time", LocalTime::class.java),
@@ -178,8 +180,11 @@ class JdbcScreeningRepository(
                     startTime = getObject("start_time", LocalTime::class.java),
                     endTime = getObject("end_time", LocalTime::class.java)
                 ),
-            reservedSeats = findReservedSeats(getString("screening_id"))
+
+            reservedSeats = findReservedSeats(getString(screeningId)),
+            screeningId = screeningId,
         )
+    }
 
     private fun findReservedSeats(screeningId: String): List<SeatNumber> {
         val sql =

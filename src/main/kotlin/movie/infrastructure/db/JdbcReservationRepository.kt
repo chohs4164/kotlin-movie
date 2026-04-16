@@ -10,12 +10,33 @@ class JdbcReservationRepository(
     private val connection: Connection,
 ) {
     fun saveAll(reservations: List<Reservation>) {
-        reservations.forEach(::save)
+        val previousAutoCommit = connection.autoCommit
+        connection.autoCommit = false
+
+        try {
+            reservations.forEach(::save)
+            connection.commit()
+        }catch(e: IllegalArgumentException){
+            connection.rollback()
+            throw e
+        }catch(e: SQLException){
+            connection.rollback()
+            if(e.isDuplicateSeatException()){
+                throw IllegalArgumentException("이미 예약된 좌석입니다.")
+            }
+            throw e
+        }finally {
+            connection.autoCommit = previousAutoCommit
+        }
     }
 
     @OptIn(ExperimentalUuidApi::class)
     fun save(reservation: Reservation) {
-        val screeningId = findScreeningId(reservation)
+        val screeningId =
+            requireNotNull(reservation.screeningMovie.screeningId){
+                "상영 정보를 찾을 수 없습니다."
+            }
+
 
         val sql =
             """
