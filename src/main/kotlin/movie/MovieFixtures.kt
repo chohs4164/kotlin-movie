@@ -39,26 +39,26 @@ class MovieFixtures {
             ),
         )
 
-    val screeningMovies =
-        ScreeningMovies(
-            listOf(
-                ScreeningMovie(
-                    movie = movie,
-                    movieTime = movieTime,
-                    theater = theaterList[0],
-                ),
-                ScreeningMovie(
-                    movie = movie,
-                    movieTime =
-                        MovieTime(
-                            date = LocalDate.of(2026, 4, 10),
-                            startTime = LocalTime.of(20, 30, 0),
-                            endTime = LocalTime.of(23, 30, 0),
-                        ),
-                    theater = theaterList[1],
-                ),
+    val screeningMovieList =
+        listOf(
+            ScreeningMovie(
+                movie = movie,
+                movieTime = movieTime,
+                theater = theaterList[0],
+            ),
+            ScreeningMovie(
+                movie = movie,
+                movieTime =
+                    MovieTime(
+                        date = LocalDate.of(2026,4,10),
+                        startTime = LocalTime.of(20,30,0),
+                        endTime = LocalTime.of(23,30,0),
+                    ),
+                theater = theaterList[1],
             ),
         )
+
+    val screeningMovies = ScreeningMovies(screeningMovieList)
 
     val theaters: Theaters =
         Theaters(
