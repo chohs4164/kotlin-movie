@@ -5,17 +5,17 @@ import java.time.LocalDate
 class ScreeningMovies(
     screeningMovies: List<ScreeningMovie> = emptyList(),
 ) {
-    private val ScreeningMovies = screeningMovies.toMutableList()
+    private val movies = screeningMovies.toMutableList()
 
     fun addMovie(movie: ScreeningMovie) {
-        ScreeningMovies.add(movie)
+        movies.add(movie)
     }
 
     fun checkDuplicateTime(
         theater: Theater,
         movieTime: MovieTime,
     ): Boolean =
-        ScreeningMovies
+        movies
             .filter {
                 it.theater.sameTheater(theater)
             }.any {
@@ -23,7 +23,7 @@ class ScreeningMovies(
             }
 
     fun getMovieTitles(): List<MovieTitle> =
-        ScreeningMovies
+        movies
             .map { it.movie.title }
             .distinct()
 
@@ -31,12 +31,12 @@ class ScreeningMovies(
         title: MovieTitle,
         date: LocalDate,
     ): List<ScreeningMovie> {
-        val screeningMovies = ScreeningMovies.filter { it.movie.title == title && it.movieTime.date == date }
+        val screeningMovies = movies.filter { it.movie.title == title && it.movieTime.date == date }
 
         require(!screeningMovies.isEmpty()) { throw IllegalArgumentException("날짜가 올바르지 않습니다.") }
 
         return screeningMovies
     }
 
-    fun containsMovieTitle(movieTitle: MovieTitle): Boolean = ScreeningMovies.any { it.movie.title == movieTitle }
+    fun containsMovieTitle(movieTitle: MovieTitle): Boolean = movies.any { it.movie.title == movieTitle }
 }

@@ -8,7 +8,7 @@ class DefaultDiscountCondition : DiscountCondition {
 
     override fun isDiscountTime(startTime: LocalTime): Boolean =
         (
-                startTime < LocalTime.of(11, 0, 0) ||
-                        startTime > LocalTime.of(20, 0, 0)
-                )
+            startTime < LocalTime.of(11, 0, 0) ||
+                startTime > LocalTime.of(20, 0, 0)
+        )
 }

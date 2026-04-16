@@ -6,9 +6,8 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 class DiscountPolicy(
-    private val discountCondition: DiscountCondition = DefaultDiscountCondition()
+    private val discountCondition: DiscountCondition = DefaultDiscountCondition(),
 ) {
-
     fun calculateDiscount(
         totalPrice: Price,
         movieTime: MovieTime,

@@ -3,8 +3,8 @@ package movie.controller
 import movie.MovieFixtures
 import movie.domain.Point
 import movie.domain.movie.MovieTitle
-import movie.domain.movie.ScreeningMovie
 import movie.domain.movie.ReservationCart
+import movie.domain.movie.ScreeningMovie
 import movie.domain.payment.Card
 import movie.domain.payment.Cash
 import movie.domain.payment.PaymentMethod
@@ -22,7 +22,7 @@ import kotlin.uuid.ExperimentalUuidApi
 class MovieController(
     private val screeningRepository: JdbcScreeningRepository,
     private val reservationRepository: JdbcReservationRepository,
-    private val movieFixtures: MovieFixtures = MovieFixtures()
+    private val movieFixtures: MovieFixtures = MovieFixtures(),
 ) {
     fun run() {
         val isStart = getReservationStart()
@@ -135,7 +135,7 @@ class MovieController(
 
             require(!reservationCart.isDupTime(selectedMovie.movieTime)) {
                 throw IllegalArgumentException(
-                    "선택하신 상영 시간이 겹칩니다. 다른 시간을 선택해 주세요."
+                    "선택하신 상영 시간이 겹칩니다. 다른 시간을 선택해 주세요.",
                 )
             }
 

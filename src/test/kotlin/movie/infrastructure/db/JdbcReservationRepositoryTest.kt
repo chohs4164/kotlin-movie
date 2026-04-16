@@ -45,16 +45,17 @@ class JdbcReservationRepositoryTest {
                     MovieTime(
                         date = LocalDate.of(2026, 4, 15),
                         startTime = LocalTime.of(13, 30),
-                        endTime = LocalTime.of(15, 30)
+                        endTime = LocalTime.of(15, 30),
                     ),
             )
         screeningRepository.save(screeningMovie)
 
         val targetScreening =
-            screeningRepository.findByTitleAndDate(
-                title = MovieTitle("아이언맨"),
-                date = LocalDate.of(2026, 4, 15),
-            ).first()
+            screeningRepository
+                .findByTitleAndDate(
+                    title = MovieTitle("아이언맨"),
+                    date = LocalDate.of(2026, 4, 15),
+                ).first()
 
         reservationRepository.save(
             Reservation(
@@ -67,10 +68,11 @@ class JdbcReservationRepositoryTest {
             ),
         )
         val saved =
-            screeningRepository.findByTitleAndDate(
-                title = MovieTitle("아이언맨"),
-                date = LocalDate.of(2026, 4, 15),
-            ).first()
+            screeningRepository
+                .findByTitleAndDate(
+                    title = MovieTitle("아이언맨"),
+                    date = LocalDate.of(2026, 4, 15),
+                ).first()
 
         assertThat(saved.isReserved(SeatNumber(Row('A'), Column(1)))).isTrue()
         assertThat(saved.isReserved(SeatNumber(Row('A'), Column(2)))).isTrue()
@@ -108,10 +110,11 @@ class JdbcReservationRepositoryTest {
         screeningRepository.save(screeningMovie)
 
         val targetScreening =
-            screeningRepository.findByTitleAndDate(
-                title = MovieTitle("아이언맨"),
-                date = LocalDate.of(2026, 4, 15),
-            ).first()
+            screeningRepository
+                .findByTitleAndDate(
+                    title = MovieTitle("아이언맨"),
+                    date = LocalDate.of(2026, 4, 15),
+                ).first()
 
         reservationRepository.save(
             Reservation(
@@ -163,10 +166,11 @@ class JdbcReservationRepositoryTest {
         screeningRepository.save(screeningMovie)
 
         val targetScreening =
-            screeningRepository.findByTitleAndDate(
-                title = MovieTitle("아이언맨"),
-                date = LocalDate.of(2026, 4, 15),
-            ).first()
+            screeningRepository
+                .findByTitleAndDate(
+                    title = MovieTitle("아이언맨"),
+                    date = LocalDate.of(2026, 4, 15),
+                ).first()
 
         reservationRepository.save(
             Reservation(
@@ -180,7 +184,7 @@ class JdbcReservationRepositoryTest {
                 listOf(
                     Reservation(
                         screeningMovie = targetScreening,
-                        seatNumbers = listOf(SeatNumber(Row('A'), Column(2)))
+                        seatNumbers = listOf(SeatNumber(Row('A'), Column(2))),
                     ),
                     Reservation(
                         screeningMovie = targetScreening,
@@ -192,10 +196,11 @@ class JdbcReservationRepositoryTest {
             .hasMessage("이미 예약된 좌석입니다.")
 
         val saved =
-            screeningRepository.findByTitleAndDate(
-                title = MovieTitle("아이언맨"),
-                date = LocalDate.of(2026, 4, 15),
-            ).first()
+            screeningRepository
+                .findByTitleAndDate(
+                    title = MovieTitle("아이언맨"),
+                    date = LocalDate.of(2026, 4, 15),
+                ).first()
 
         assertThat(saved.isReserved(SeatNumber(Row('A'), Column(1)))).isTrue()
         assertThat(saved.isReserved(SeatNumber(Row('A'), Column(2)))).isFalse()
@@ -219,30 +224,30 @@ class JdbcReservationRepositoryTest {
             ScreeningMovie(
                 theater =
                     Theater(
-                        openTime = LocalTime.of(9,0),
-                        closeTime = LocalTime.of(23,0),
+                        openTime = LocalTime.of(9, 0),
+                        closeTime = LocalTime.of(23, 0),
                     ),
                 movie = Movie(title = MovieTitle("아이언맨")),
                 movieTime =
                     MovieTime(
-                        date = LocalDate.of(2026,4,15),
-                        startTime = LocalTime.of(13,30),
-                        endTime = LocalTime.of(15,30),
+                        date = LocalDate.of(2026, 4, 15),
+                        startTime = LocalTime.of(13, 30),
+                        endTime = LocalTime.of(15, 30),
                     ),
             )
         val secondScreeningMovie =
             ScreeningMovie(
                 theater =
                     Theater(
-                        openTime = LocalTime.of(9,0),
-                        closeTime = LocalTime.of(23,0)
+                        openTime = LocalTime.of(9, 0),
+                        closeTime = LocalTime.of(23, 0),
                     ),
                 movie = Movie(title = MovieTitle("아이언맨")),
                 movieTime =
                     MovieTime(
-                        date = LocalDate.of(2026,4,15),
-                        startTime = LocalTime.of(13,30),
-                        endTime = LocalTime.of(15,30),
+                        date = LocalDate.of(2026, 4, 15),
+                        startTime = LocalTime.of(13, 30),
+                        endTime = LocalTime.of(15, 30),
                     ),
             )
 
@@ -252,7 +257,7 @@ class JdbcReservationRepositoryTest {
         val screenings =
             screeningRepository.findByTitleAndDate(
                 title = MovieTitle("아이언맨"),
-                date = LocalDate.of(2026,4,15),
+                date = LocalDate.of(2026, 4, 15),
             )
 
         val targetScreening = screenings.last()
@@ -261,17 +266,16 @@ class JdbcReservationRepositoryTest {
         reservationRepository.save(
             Reservation(
                 screeningMovie = targetScreening,
-                seatNumbers = listOf(SeatNumber(Row('A'),Column(3))),
+                seatNumbers = listOf(SeatNumber(Row('A'), Column(3))),
             ),
         )
 
-        connection.prepareStatement("select screening_id, seat_number from seats").use{statement ->
+        connection.prepareStatement("select screening_id, seat_number from seats").use { statement ->
             statement.executeQuery().use { resultSet ->
                 assertThat(resultSet.next()).isTrue()
                 assertThat(resultSet.getString("screening_id")).isEqualTo(targetScreening.screeningId)
                 assertThat(resultSet.getString("screening_id")).isNotEqualTo(otherScreening.screeningId)
                 assertThat(resultSet.getString("seat_number")).isEqualTo("A3")
-
             }
         }
     }

@@ -67,8 +67,8 @@ class InputParserTest {
 
     @Test
     fun `0번을 입력하면 예외가 발생한다`() {
-        assertThatThrownBy{
-            InputParser.parseIndex("0",3)
+        assertThatThrownBy {
+            InputParser.parseIndex("0", 3)
         }.isInstanceOf(IllegalArgumentException::class.java)
             .hasMessage("유효한 번호를 입력해주세요")
     }

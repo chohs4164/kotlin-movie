@@ -5,5 +5,6 @@ import java.time.LocalTime
 
 interface DiscountCondition {
     fun isMovieDay(date: LocalDate): Boolean
+
     fun isDiscountTime(startTime: LocalTime): Boolean
 }
