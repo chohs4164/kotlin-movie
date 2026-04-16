@@ -16,16 +16,16 @@ class JdbcReservationRepository(
         try {
             reservations.forEach(::save)
             connection.commit()
-        }catch(e: IllegalArgumentException){
+        } catch (e: IllegalArgumentException) {
             connection.rollback()
             throw e
-        }catch(e: SQLException){
+        } catch (e: SQLException) {
             connection.rollback()
-            if(e.isDuplicateSeatException()){
+            if (e.isDuplicateSeatException()) {
                 throw IllegalArgumentException("이미 예약된 좌석입니다.")
             }
             throw e
-        }finally {
+        } finally {
             connection.autoCommit = previousAutoCommit
         }
     }
@@ -33,10 +33,9 @@ class JdbcReservationRepository(
     @OptIn(ExperimentalUuidApi::class)
     fun save(reservation: Reservation) {
         val screeningId =
-            requireNotNull(reservation.screeningMovie.screeningId){
+            requireNotNull(reservation.screeningMovie.screeningId) {
                 "상영 정보를 찾을 수 없습니다."
             }
-
 
         val sql =
             """
