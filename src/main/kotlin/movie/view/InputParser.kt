@@ -37,7 +37,7 @@ object InputParser {
         size: Int,
     ): Int {
         val index = input.toInt()
-        require(index in 0..size) { "유효한 번호를 입력해주세요" }
+        require(index in 1..size) { "유효한 번호를 입력해주세요" }
 
         return index - 1
     }
