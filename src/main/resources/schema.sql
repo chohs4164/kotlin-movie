@@ -24,6 +24,6 @@ create table if not exists seats(
     seats_id uuid primary key,
     screening_id uuid not null,
     seat_number varchar(10) not null,
-    foreign key (screening_id) references screenings(screening_id)
+    foreign key (screening_id) references screenings(screening_id),
     unique(screening_id,seat_number)
 );

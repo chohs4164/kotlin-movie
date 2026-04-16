@@ -10,6 +10,7 @@ import movie.domain.seat.number.Column
 import movie.domain.seat.number.Row
 import movie.domain.seat.number.SeatNumber
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import java.sql.DriverManager
 import java.time.LocalDate
@@ -73,5 +74,60 @@ class JdbcReservationRepositoryTest {
 
         assertThat(saved.isReserved(SeatNumber(Row('A'), Column(1)))).isTrue()
         assertThat(saved.isReserved(SeatNumber(Row('A'), Column(2)))).isTrue()
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
+    @Test
+    fun `이미 예약된 좌석을 다시 저장하면 예외가 발생한다`() {
+        val connection =
+            DriverManager.getConnection(
+                "jdbc:h2:mem:${Uuid.random()}",
+                "sa",
+                "",
+            )
+        SchemaInitializer().initialize(connection)
+
+        val screeningRepository = JdbcScreeningRepository(connection)
+        val reservationRepository = JdbcReservationRepository(connection)
+
+        val screeningMovie =
+            ScreeningMovie(
+                theater =
+                    Theater(
+                        openTime = LocalTime.of(9, 0),
+                        closeTime = LocalTime.of(23, 0),
+                    ),
+                movie = Movie(title = MovieTitle("아이언맨")),
+                movieTime =
+                    MovieTime(
+                        date = LocalDate.of(2026, 4, 15),
+                        startTime = LocalTime.of(13, 30),
+                        endTime = LocalTime.of(15, 30),
+                    ),
+            )
+        screeningRepository.save(screeningMovie)
+
+        val targetScreening =
+            screeningRepository.findByTitleAndDate(
+                title = MovieTitle("아이언맨"),
+                date = LocalDate.of(2026, 4, 15),
+            ).first()
+
+        reservationRepository.save(
+            Reservation(
+                screeningMovie = targetScreening,
+                seatNumbers = listOf(SeatNumber(Row('A'), Column(1))),
+            ),
+        )
+
+        assertThatThrownBy {
+            reservationRepository.save(
+                Reservation(
+                    screeningMovie = targetScreening,
+                    seatNumbers = listOf(SeatNumber(Row('A'), Column(1))),
+                ),
+            )
+        }.isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessage("이미 예약된 좌석입니다.")
     }
 }
