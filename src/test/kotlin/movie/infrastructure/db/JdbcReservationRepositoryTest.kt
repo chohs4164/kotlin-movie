@@ -237,7 +237,7 @@ class JdbcReservationRepositoryTest {
                         openTime = LocalTime.of(9,0),
                         closeTime = LocalTime.of(23,0)
                     ),
-                movie = Movie(title = MovieTitle("아어언맨")),
+                movie = Movie(title = MovieTitle("아이언맨")),
                 movieTime =
                     MovieTime(
                         date = LocalDate.of(2026,4,15),
@@ -265,11 +265,11 @@ class JdbcReservationRepositoryTest {
             ),
         )
 
-        connection.prepareStatement("select screnning_id seat_number from seats").use{statement ->
+        connection.prepareStatement("select screening_id, seat_number from seats").use{statement ->
             statement.executeQuery().use { resultSet ->
                 assertThat(resultSet.next()).isTrue()
                 assertThat(resultSet.getString("screening_id")).isEqualTo(targetScreening.screeningId)
-                assertThat(resultSet.getString("screening_id")).isEqualTo(otherScreening.screeningId)
+                assertThat(resultSet.getString("screening_id")).isNotEqualTo(otherScreening.screeningId)
                 assertThat(resultSet.getString("seat_number")).isEqualTo("A3")
 
             }
