@@ -68,7 +68,13 @@ class MovieController(
             return
         }
 
-        reservationRepository.saveAll(reservationCart.getReservations())
+        try {
+            reservationRepository.saveAll(reservationCart.getReservations())
+        } catch (e: IllegalArgumentException) {
+            OutputView.printErrorMessage(e.message)
+            reservationCart.resetSeat()
+            return
+        }
 
         OutputView.printReceipt(
             reservationCart = reservationCart,
