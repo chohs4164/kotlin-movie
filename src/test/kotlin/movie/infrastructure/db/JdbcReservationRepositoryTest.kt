@@ -6,7 +6,6 @@ import movie.domain.movie.MovieTitle
 import movie.domain.movie.Reservation
 import movie.domain.movie.ScreeningMovie
 import movie.domain.movie.Theater
-import movie.domain.seat.Seat
 import movie.domain.seat.number.Column
 import movie.domain.seat.number.Row
 import movie.domain.seat.number.SeatNumber
@@ -256,12 +255,12 @@ class JdbcReservationRepositoryTest {
                 date = LocalDate.of(2026,4,15),
             )
 
-        val targerScreening = screenings.last()
+        val targetScreening = screenings.last()
         val otherScreening = screenings.first()
 
         reservationRepository.save(
             Reservation(
-                screeningMovie = targerScreening,
+                screeningMovie = targetScreening,
                 seatNumbers = listOf(SeatNumber(Row('A'),Column(3))),
             ),
         )
@@ -269,7 +268,7 @@ class JdbcReservationRepositoryTest {
         connection.prepareStatement("select screnning_id seat_number from seats").use{statement ->
             statement.executeQuery().use { resultSet ->
                 assertThat(resultSet.next()).isTrue()
-                assertThat(resultSet.getString("screening_id")).isEqualTo(targerScreening.screeningId)
+                assertThat(resultSet.getString("screening_id")).isEqualTo(targetScreening.screeningId)
                 assertThat(resultSet.getString("screening_id")).isEqualTo(otherScreening.screeningId)
                 assertThat(resultSet.getString("seat_number")).isEqualTo("A3")
 

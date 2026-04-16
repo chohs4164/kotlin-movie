@@ -181,7 +181,7 @@ class JdbcScreeningRepository(
                     endTime = getObject("end_time", LocalTime::class.java)
                 ),
 
-            reservedSeats = findReservedSeats(getString(screeningId)),
+            reservedSeats = findReservedSeats(screeningId),
             screeningId = screeningId,
         )
     }
