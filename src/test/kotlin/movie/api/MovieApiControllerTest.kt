@@ -3,8 +3,8 @@ package movie.api
 import movie.api.dto.MoviesResponse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.http.MediaType
 import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.web.servlet.client.RestTestClient
@@ -38,16 +38,26 @@ class MovieApiControllerTest {
             .expectHeader()
             .contentTypeCompatibleWith(MediaType.APPLICATION_JSON)
             .expectBody()
-            .jsonPath("$.movies").isArray()
-            .jsonPath("$.movies[0].id").isEqualTo(1)
-            .jsonPath("$.movies[0].title").isEqualTo("인터스텔라")
-            .jsonPath("$.movies[0].runningTimeMinutes").isEqualTo(169)
-            .jsonPath("$.movies[0].screenings[0].id").isEqualTo(101)
-            .jsonPath("$.movies[0].screenings[1].id").isEqualTo(102)
-            .jsonPath("$.movies[1].id").isEqualTo(2)
-            .jsonPath("$.movies[1].title").isEqualTo("오펜하이머")
-            .jsonPath("$.movies[1].runningTimeMinutes").isEqualTo(180)
-            .jsonPath("$.movies[1].screenings[0].id").isEqualTo(201)
+            .jsonPath("$.movies")
+            .isArray()
+            .jsonPath("$.movies[0].id")
+            .isEqualTo(1)
+            .jsonPath("$.movies[0].title")
+            .isEqualTo("인터스텔라")
+            .jsonPath("$.movies[0].runningTimeMinutes")
+            .isEqualTo(169)
+            .jsonPath("$.movies[0].screenings[0].id")
+            .isEqualTo(101)
+            .jsonPath("$.movies[0].screenings[1].id")
+            .isEqualTo(102)
+            .jsonPath("$.movies[1].id")
+            .isEqualTo(2)
+            .jsonPath("$.movies[1].title")
+            .isEqualTo("오펜하이머")
+            .jsonPath("$.movies[1].runningTimeMinutes")
+            .isEqualTo(180)
+            .jsonPath("$.movies[1].screenings[0].id")
+            .isEqualTo(201)
     }
 
     @Test
