@@ -16,11 +16,10 @@ import movie.infrastructure.db.JdbcReservationRepository
 import movie.infrastructure.db.JdbcScreeningRepository
 import org.springframework.stereotype.Service
 import java.time.Duration
-import java.util.UUID
 import java.util.concurrent.atomic.AtomicLong
 
 class ScreeningNotFoundException(
-    screeningId: String,
+    screeningId: Int,
 ) : RuntimeException("존재하지 않는 상영 정보입니다. screeningId=$screeningId")
 
 class ReservationConflictException(
@@ -36,30 +35,21 @@ class MovieApiService(
 ) {
     fun getMovies(): MoviesResponse {
         val movies =
-            screeningRepository
-                .findAllMovieScreenings()
-                .groupBy { it.movieId }
-                .values
-                .map { records ->
-                    val firstRecord = records.first()
-                    MovieResponse(
-                        movieId = firstRecord.movieId,
-                        title = firstRecord.title,
-                        runningTimeMinutes =
-                            Duration
-                                .between(firstRecord.startAt, firstRecord.endAt)
-                                .toMinutes()
-                                .toInt(),
-                        screenings =
-                            records.map { record ->
-                                MovieScreeningResponse(
-                                    screeningId = record.screeningId,
-                                    startAt = record.startAt,
-                                    endAt = record.endAt,
-                                )
-                            },
-                    )
-                }.sortedBy { it.title }
+            buildMovieCatalog().map { movie ->
+                MovieResponse(
+                    id = movie.id,
+                    title = movie.title,
+                    runningTimeMinutes = movie.runningTimeMinutes,
+                    screenings =
+                        movie.screenings.map { screening ->
+                            MovieScreeningResponse(
+                                id = screening.id,
+                                startAt = screening.startAt,
+                                endAt = screening.endAt,
+                            )
+                        },
+                )
+            }
 
         return MoviesResponse(movies = movies)
     }
@@ -67,17 +57,23 @@ class MovieApiService(
     fun createReservation(request: CreateReservationRequest): CreateReservationResponse {
         require(request.reservations.isNotEmpty()) { "예매 목록은 비어 있을 수 없습니다." }
 
+        val movieCatalog = buildMovieCatalog()
         val reservationCart = ReservationCart()
 
         request.reservations.forEach { reservationRequest ->
             require(reservationRequest.seats.isNotEmpty()) { "좌석 목록은 비어 있을 수 없습니다." }
-            validateScreeningIdFormat(reservationRequest.screeningId)
 
             val seatNumbers = reservationRequest.seats.map(::toSeatNumber)
             require(seatNumbers.distinct().size == seatNumbers.size) { "중복된 좌석은 예매할 수 없습니다." }
 
+            val apiScreening =
+                movieCatalog
+                    .flatMap(ApiMovie::screenings)
+                    .find { it.id == reservationRequest.screeningId }
+                    ?: throw ScreeningNotFoundException(reservationRequest.screeningId)
+
             val screeningMovie =
-                screeningRepository.findByScreeningId(reservationRequest.screeningId)
+                screeningRepository.findByScreeningId(apiScreening.internalScreeningId)
                     ?: throw ScreeningNotFoundException(reservationRequest.screeningId)
 
             require(!reservationCart.isDupTime(screeningMovie.movieTime)) {
@@ -131,6 +127,42 @@ class MovieApiService(
         )
     }
 
+    private fun buildMovieCatalog(): List<ApiMovie> {
+        val titleOrder =
+            movieFixtures.screeningMovieList
+                .map { it.movie.title.value }
+                .distinct()
+
+        return screeningRepository
+            .findAllMovieScreenings()
+            .groupBy { it.title }
+            .entries
+            .sortedWith(compareBy({ titleOrder.indexOf(it.key).takeIf { index -> index >= 0 } ?: Int.MAX_VALUE }, { it.key }))
+            .mapIndexed { movieIndex, entry ->
+                val sortedRecords = entry.value.sortedBy { it.startAt }
+                val firstRecord = sortedRecords.first()
+
+                ApiMovie(
+                    id = movieIndex + 1,
+                    title = entry.key,
+                    runningTimeMinutes =
+                        Duration
+                            .between(firstRecord.startAt, firstRecord.endAt)
+                            .toMinutes()
+                            .toInt(),
+                    screenings =
+                        sortedRecords.mapIndexed { screeningIndex, record ->
+                            ApiScreening(
+                                id = (movieIndex + 1) * 100 + (screeningIndex + 1),
+                                internalScreeningId = record.screeningId,
+                                startAt = record.startAt,
+                                endAt = record.endAt,
+                            )
+                        },
+                )
+            }
+    }
+
     private fun toSeatNumber(seat: String): SeatNumber {
         require(SEAT_PATTERN.matches(seat)) { "좌석은 A1 형식으로 입력해야 합니다." }
 
@@ -144,8 +176,17 @@ class MovieApiService(
         private val SEAT_PATTERN = Regex("^[A-Za-z]\\d+$")
     }
 
-    private fun validateScreeningIdFormat(screeningId: String) {
-        runCatching { UUID.fromString(screeningId) }
-            .getOrElse { throw IllegalArgumentException("screeningId 형식이 올바르지 않습니다.") }
-    }
+    private data class ApiMovie(
+        val id: Int,
+        val title: String,
+        val runningTimeMinutes: Int,
+        val screenings: List<ApiScreening>,
+    )
+
+    private data class ApiScreening(
+        val id: Int,
+        val internalScreeningId: String,
+        val startAt: java.time.LocalDateTime,
+        val endAt: java.time.LocalDateTime,
+    )
 }

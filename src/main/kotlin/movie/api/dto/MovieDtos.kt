@@ -7,14 +7,14 @@ data class MoviesResponse(
 )
 
 data class MovieResponse(
-    val movieId: String,
+    val id: Int,
     val title: String,
     val runningTimeMinutes: Int,
     val screenings: List<MovieScreeningResponse>,
 )
 
 data class MovieScreeningResponse(
-    val screeningId: String,
+    val id: Int,
     val startAt: LocalDateTime,
     val endAt: LocalDateTime,
 )

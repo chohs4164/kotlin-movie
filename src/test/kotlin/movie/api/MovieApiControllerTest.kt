@@ -1,21 +1,19 @@
 package movie.api
 
 import movie.api.dto.MoviesResponse
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.web.servlet.client.RestTestClient
-import org.springframework.web.context.WebApplicationContext
 
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class MovieApiControllerTest {
-    @Autowired
-    private lateinit var context: WebApplicationContext
+    @LocalServerPort
+    private var port: Int = 0
 
     private lateinit var client: RestTestClient
 
@@ -23,29 +21,33 @@ class MovieApiControllerTest {
     fun setUp() {
         client =
             RestTestClient
-                .bindToApplicationContext(context)
+                .bindToServer()
+                .baseUrl("http://localhost:$port")
                 .build()
     }
 
     @Test
     fun `영화 목록을 조회한다`() {
-        val response =
-            client
-                .get()
-                .uri("/api/movies")
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectStatus()
-                .isOk()
-                .expectHeader()
-                .contentTypeCompatibleWith(MediaType.APPLICATION_JSON)
-                .expectBody(MoviesResponse::class.java)
-                .returnResult()
-                .responseBody!!
-
-        assertThat(response.movies).hasSize(2)
-        assertThat(response.movies.map { it.title }).containsExactlyInAnyOrder("인터스텔라", "오펜하이머")
-        assertThat(response.movies.first { it.title == "인터스텔라" }.screenings).hasSize(2)
+        client
+            .get()
+            .uri("/api/movies")
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isOk()
+            .expectHeader()
+            .contentTypeCompatibleWith(MediaType.APPLICATION_JSON)
+            .expectBody()
+            .jsonPath("$.movies").isArray()
+            .jsonPath("$.movies[0].id").isEqualTo(1)
+            .jsonPath("$.movies[0].title").isEqualTo("인터스텔라")
+            .jsonPath("$.movies[0].runningTimeMinutes").isEqualTo(169)
+            .jsonPath("$.movies[0].screenings[0].id").isEqualTo(101)
+            .jsonPath("$.movies[0].screenings[1].id").isEqualTo(102)
+            .jsonPath("$.movies[1].id").isEqualTo(2)
+            .jsonPath("$.movies[1].title").isEqualTo("오펜하이머")
+            .jsonPath("$.movies[1].runningTimeMinutes").isEqualTo(180)
+            .jsonPath("$.movies[1].screenings[0].id").isEqualTo(201)
     }
 
     @Test
@@ -61,7 +63,7 @@ class MovieApiControllerTest {
                 {
                   "reservations": [
                     {
-                      "screeningId": "$screeningId",
+                      "screeningId": $screeningId,
                       "seats": ["C2", "C3"]
                     }
                   ],
@@ -104,7 +106,7 @@ class MovieApiControllerTest {
                 {
                   "reservations": [
                     {
-                      "screeningId": "$screeningId",
+                      "screeningId": $screeningId,
                       "seats": ["A1"]
                     }
                   ],
@@ -131,7 +133,7 @@ class MovieApiControllerTest {
                 {
                       "reservations": [
                         {
-                          "screeningId": "00000000-0000-0000-0000-000000000000",
+                          "screeningId": 999,
                           "seats": ["A1"]
                         }
                       ],
@@ -144,9 +146,7 @@ class MovieApiControllerTest {
             .isNotFound()
             .expectBody()
             .jsonPath("$.message")
-            .value<String> { message ->
-                assertThat(message).contains("존재하지 않는 상영 정보입니다.")
-            }
+            .isEqualTo("존재하지 않는 상영 정보입니다. screeningId=999")
     }
 
     @Test
@@ -164,7 +164,34 @@ class MovieApiControllerTest {
             .isEqualTo("잘못된 요청 형식입니다.")
     }
 
-    private fun findScreeningId(title: String): String =
+    @Test
+    fun `잘못된 상영 아이디 타입은 잘못된 요청 응답을 반환한다`() {
+        client
+            .post()
+            .uri("/api/reservations")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(
+                """
+                {
+                  "reservations": [
+                    {
+                      "screeningId": "invalid",
+                      "seats": ["A1"]
+                    }
+                  ],
+                  "usedPoints": 0,
+                  "paymentMethod": "CASH"
+                }
+                """.trimIndent(),
+            ).exchange()
+            .expectStatus()
+            .isBadRequest()
+            .expectBody()
+            .jsonPath("$.message")
+            .isEqualTo("잘못된 요청 형식입니다.")
+    }
+
+    private fun findScreeningId(title: String): Int =
         client
             .get()
             .uri("/api/movies")
@@ -179,10 +206,10 @@ class MovieApiControllerTest {
             .first { it.title == title }
             .screenings
             .first()
-            .screeningId
+            .id
 
     private fun reserveSeat(
-        screeningId: String,
+        screeningId: Int,
         seat: String,
     ) {
         client
@@ -194,7 +221,7 @@ class MovieApiControllerTest {
                 {
                   "reservations": [
                     {
-                      "screeningId": "$screeningId",
+                      "screeningId": $screeningId,
                       "seats": ["$seat"]
                     }
                   ],

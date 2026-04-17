@@ -11,7 +11,7 @@ data class CreateReservationRequest(
 )
 
 data class ReservationItemRequest(
-    val screeningId: String,
+    val screeningId: Int,
     val seats: List<String>,
 )
 
@@ -24,7 +24,7 @@ data class CreateReservationResponse(
 )
 
 data class ReservationItemResponse(
-    val screeningId: String,
+    val screeningId: Int,
     val seats: List<String>,
 )
 
