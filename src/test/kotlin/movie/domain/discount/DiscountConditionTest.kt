@@ -10,41 +10,41 @@ import kotlin.uuid.ExperimentalUuidApi
 class DiscountConditionTest {
     @Test
     fun `무비데이 할인 조건에 해당하면 true를 반환한다`() {
-        val discountCondition = DiscountCondition()
+        val discountCondition = DefaultDiscountCondition()
         val movieDate = LocalDate.of(2026, 4, 10)
 
         val isMovieDay = discountCondition.isMovieDay(date = movieDate)
 
-        assertThat(isMovieDay).isTrue
+        assertThat(isMovieDay).isTrue()
     }
 
     @Test
     fun `무비데이 할인 조건에 해당하지 않으면 false를 반환한다`() {
-        val discountCondition = DiscountCondition()
+        val discountCondition = DefaultDiscountCondition()
         val movieDate = LocalDate.of(2026, 4, 11)
 
         val isMovieDay = discountCondition.isMovieDay(date = movieDate)
 
-        assertThat(isMovieDay).isFalse
+        assertThat(isMovieDay).isFalse()
     }
 
     @Test
     fun `타임 할인 조건에 해당하면 true를 반환한다`() {
-        val discountCondition = DiscountCondition()
+        val discountCondition = DefaultDiscountCondition()
         val movieTime = LocalTime.of(7, 0, 0)
 
-        val isTime = discountCondition.isTime(startTime = movieTime)
+        val isTime = discountCondition.isDiscountTime(startTime = movieTime)
 
-        assertThat(isTime).isTrue
+        assertThat(isTime).isTrue()
     }
 
     @Test
     fun `타임 할인 조건에 해당하지 않으면 false를 반환한다`() {
-        val discountCondition = DiscountCondition()
+        val discountCondition = DefaultDiscountCondition()
         val movieTime = LocalTime.of(15, 0, 0)
 
-        val isTime = discountCondition.isTime(startTime = movieTime)
+        val isTime = discountCondition.isDiscountTime(startTime = movieTime)
 
-        assertThat(isTime).isFalse
+        assertThat(isTime).isFalse()
     }
 }

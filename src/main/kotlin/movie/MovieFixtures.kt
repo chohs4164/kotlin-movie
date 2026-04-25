@@ -18,13 +18,10 @@ import kotlin.uuid.ExperimentalUuidApi
 
 class MovieFixtures {
     @OptIn(ExperimentalUuidApi::class)
-    val movie = Movie(title = MovieTitle("아이언맨"))
-    val movieTime =
-        MovieTime(
-            date = LocalDate.of(2026, 4, 9),
-            startTime = LocalTime.of(12, 0, 0),
-            endTime = LocalTime.of(14, 30, 0),
-        )
+    val interstellar = Movie(title = MovieTitle("인터스텔라"))
+
+    @OptIn(ExperimentalUuidApi::class)
+    val oppenheimer = Movie(title = MovieTitle("오펜하이머"))
 
     @OptIn(ExperimentalUuidApi::class)
     val theaterList =
@@ -39,26 +36,41 @@ class MovieFixtures {
             ),
         )
 
-    val screeningMovies =
-        ScreeningMovies(
-            listOf(
-                ScreeningMovie(
-                    movie = movie,
-                    movieTime = movieTime,
-                    theater = theaterList[0],
-                ),
-                ScreeningMovie(
-                    movie = movie,
-                    movieTime =
-                        MovieTime(
-                            date = LocalDate.of(2026, 4, 10),
-                            startTime = LocalTime.of(20, 30, 0),
-                            endTime = LocalTime.of(23, 30, 0),
-                        ),
-                    theater = theaterList[1],
-                ),
+    val screeningMovieList =
+        listOf(
+            ScreeningMovie(
+                movie = interstellar,
+                movieTime =
+                    MovieTime(
+                        date = LocalDate.of(2026, 4, 20),
+                        startTime = LocalTime.of(13, 30, 0),
+                        endTime = LocalTime.of(16, 19, 0),
+                    ),
+                theater = theaterList[0],
+            ),
+            ScreeningMovie(
+                movie = interstellar,
+                movieTime =
+                    MovieTime(
+                        date = LocalDate.of(2026, 4, 20),
+                        startTime = LocalTime.of(18, 0, 0),
+                        endTime = LocalTime.of(20, 49, 0),
+                    ),
+                theater = theaterList[1],
+            ),
+            ScreeningMovie(
+                movie = oppenheimer,
+                movieTime =
+                    MovieTime(
+                        date = LocalDate.of(2026, 4, 20),
+                        startTime = LocalTime.of(10, 0, 0),
+                        endTime = LocalTime.of(13, 0, 0),
+                    ),
+                theater = theaterList[0],
             ),
         )
+
+    val screeningMovies = ScreeningMovies(screeningMovieList)
 
     val theaters: Theaters =
         Theaters(
