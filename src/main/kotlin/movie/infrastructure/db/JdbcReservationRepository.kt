@@ -1,5 +1,6 @@
 package movie.infrastructure.db
 
+import movie.domain.movie.AlreadyReservedSeatException
 import movie.domain.movie.Reservation
 import java.sql.Connection
 import java.sql.SQLException
@@ -16,13 +17,13 @@ class JdbcReservationRepository(
         try {
             reservations.forEach(::save)
             connection.commit()
-        } catch (e: IllegalArgumentException) {
+        } catch (e: RuntimeException) {
             connection.rollback()
             throw e
         } catch (e: SQLException) {
             connection.rollback()
             if (e.isDuplicateSeatException()) {
-                throw IllegalArgumentException("이미 예약된 좌석입니다.")
+                throw AlreadyReservedSeatException()
             }
             throw e
         } finally {
@@ -55,7 +56,7 @@ class JdbcReservationRepository(
             }
         } catch (e: SQLException) {
             if (e.isDuplicateSeatException()) {
-                throw IllegalArgumentException("이미 예약된 좌석입니다.")
+                throw AlreadyReservedSeatException()
             }
             throw e
         }
