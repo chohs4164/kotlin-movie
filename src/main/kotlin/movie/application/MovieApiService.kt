@@ -22,11 +22,7 @@ import java.util.concurrent.atomic.AtomicLong
 
 class ScreeningNotFoundException(
     screeningId: Int,
-) : RuntimeException("존재하지 않는 상영 정보입니다. screeningId=$screeningId")
-
-class ReservationConflictException(
-    message: String,
-) : RuntimeException(message)
+) : NoSuchElementException("존재하지 않는 상영 정보입니다. screeningId=$screeningId")
 
 @Service
 class MovieApiService(
@@ -85,15 +81,6 @@ class MovieApiService(
                 "선택하신 상영 시간이 겹칩니다. 다른 시간을 선택해 주세요."
             }
 
-            try {
-                seatNumbers.forEach(screeningMovie::reserveCheck)
-            } catch (e: IllegalArgumentException) {
-                if (e.message == "이미 예약된 좌석입니다.") {
-                    throw ReservationConflictException(e.message ?: "이미 예약된 좌석입니다.")
-                }
-                throw e
-            }
-
             reservationCart.addReservation(screeningMovie, seatNumbers)
         }
 
@@ -107,15 +94,7 @@ class MovieApiService(
                 totalPrice = pointAppliedPrice,
             )
 
-        try {
-            reservationRepository.saveAll(reservationCart.getReservations())
-        } catch (e: IllegalArgumentException) {
-            reservationCart.resetSeat()
-            if (e.message == "이미 예약된 좌석입니다.") {
-                throw ReservationConflictException(e.message ?: "이미 예약된 좌석입니다.")
-            }
-            throw e
-        }
+        reservationRepository.saveAll(reservationCart.getReservations())
 
         return CreateReservationResponse(
             reservationId = reservationIdSequence.incrementAndGet(),

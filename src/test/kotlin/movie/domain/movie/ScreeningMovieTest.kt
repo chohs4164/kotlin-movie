@@ -76,7 +76,7 @@ class ScreeningMovieTest {
                 ),
             )
 
-        assertThrows<IllegalArgumentException> {
+        assertThrows<AlreadyReservedSeatException> {
             screeningMovie.reserve(targetSeatNumbers = targetSeatNumbers)
         }
     }

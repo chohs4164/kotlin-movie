@@ -1,5 +1,6 @@
 package movie.infrastructure.db
 
+import movie.domain.movie.AlreadyReservedSeatException
 import movie.domain.movie.Movie
 import movie.domain.movie.MovieTime
 import movie.domain.movie.MovieTitle
@@ -130,7 +131,7 @@ class JdbcReservationRepositoryTest {
                     seatNumbers = listOf(SeatNumber(Row('A'), Column(1))),
                 ),
             )
-        }.isInstanceOf(IllegalArgumentException::class.java)
+        }.isInstanceOf(AlreadyReservedSeatException::class.java)
             .hasMessage("이미 예약된 좌석입니다.")
     }
 
@@ -192,7 +193,7 @@ class JdbcReservationRepositoryTest {
                     ),
                 ),
             )
-        }.isInstanceOf(IllegalArgumentException::class.java)
+        }.isInstanceOf(AlreadyReservedSeatException::class.java)
             .hasMessage("이미 예약된 좌석입니다.")
 
         val saved =
