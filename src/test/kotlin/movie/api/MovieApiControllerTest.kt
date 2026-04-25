@@ -1,6 +1,9 @@
 package movie.api
 
+import movie.api.dto.MovieResponse
+import movie.api.dto.MovieScreeningResponse
 import movie.api.dto.MoviesResponse
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
@@ -8,6 +11,7 @@ import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.http.MediaType
 import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.web.servlet.client.RestTestClient
+import java.time.LocalDateTime
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
@@ -28,36 +32,59 @@ class MovieApiControllerTest {
 
     @Test
     fun `영화 목록을 조회한다`() {
-        client
-            .get()
-            .uri("/api/movies")
-            .accept(MediaType.APPLICATION_JSON)
-            .exchange()
-            .expectStatus()
-            .isOk()
-            .expectHeader()
-            .contentTypeCompatibleWith(MediaType.APPLICATION_JSON)
-            .expectBody()
-            .jsonPath("$.movies")
-            .isArray()
-            .jsonPath("$.movies[0].id")
-            .isEqualTo(1)
-            .jsonPath("$.movies[0].title")
-            .isEqualTo("인터스텔라")
-            .jsonPath("$.movies[0].runningTimeMinutes")
-            .isEqualTo(169)
-            .jsonPath("$.movies[0].screenings[0].id")
-            .isEqualTo(101)
-            .jsonPath("$.movies[0].screenings[1].id")
-            .isEqualTo(102)
-            .jsonPath("$.movies[1].id")
-            .isEqualTo(2)
-            .jsonPath("$.movies[1].title")
-            .isEqualTo("오펜하이머")
-            .jsonPath("$.movies[1].runningTimeMinutes")
-            .isEqualTo(180)
-            .jsonPath("$.movies[1].screenings[0].id")
-            .isEqualTo(201)
+        val actual =
+            client
+                .get()
+                .uri("/api/movies")
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectHeader()
+                .contentTypeCompatibleWith(MediaType.APPLICATION_JSON)
+                .expectBody(MoviesResponse::class.java)
+                .returnResult()
+                .responseBody!!
+
+        val expected =
+            MoviesResponse(
+                movies =
+                    listOf(
+                        MovieResponse(
+                            id = 1,
+                            title = "인터스텔라",
+                            runningTimeMinutes = 169,
+                            screenings =
+                                listOf(
+                                    MovieScreeningResponse(
+                                        id = 101,
+                                        startAt = LocalDateTime.of(2026, 4, 20, 13, 30),
+                                        endAt = LocalDateTime.of(2026, 4, 20, 16, 19),
+                                    ),
+                                    MovieScreeningResponse(
+                                        id = 102,
+                                        startAt = LocalDateTime.of(2026, 4, 20, 18, 0),
+                                        endAt = LocalDateTime.of(2026, 4, 20, 20, 49),
+                                    ),
+                                ),
+                        ),
+                        MovieResponse(
+                            id = 2,
+                            title = "오펜하이머",
+                            runningTimeMinutes = 180,
+                            screenings =
+                                listOf(
+                                    MovieScreeningResponse(
+                                        id = 201,
+                                        startAt = LocalDateTime.of(2026, 4, 20, 10, 0),
+                                        endAt = LocalDateTime.of(2026, 4, 20, 13, 0),
+                                    ),
+                                ),
+                        ),
+                    ),
+            )
+
+        assertThat(actual).isEqualTo(expected)
     }
 
     @Test

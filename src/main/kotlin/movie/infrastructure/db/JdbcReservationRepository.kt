@@ -2,6 +2,7 @@ package movie.infrastructure.db
 
 import movie.domain.movie.AlreadyReservedSeatException
 import movie.domain.movie.Reservation
+import movie.domain.movie.ReservationRepository
 import java.sql.Connection
 import java.sql.SQLException
 import kotlin.uuid.ExperimentalUuidApi
@@ -9,8 +10,8 @@ import kotlin.uuid.Uuid
 
 class JdbcReservationRepository(
     private val connection: Connection,
-) {
-    fun saveAll(reservations: List<Reservation>) {
+) : ReservationRepository {
+    override fun saveAll(reservations: List<Reservation>) {
         val previousAutoCommit = connection.autoCommit
         connection.autoCommit = false
 

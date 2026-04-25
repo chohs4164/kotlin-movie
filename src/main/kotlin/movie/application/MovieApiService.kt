@@ -5,16 +5,19 @@ import movie.api.dto.CreateReservationResponse
 import movie.api.dto.MovieResponse
 import movie.api.dto.MovieScreeningResponse
 import movie.api.dto.MoviesResponse
+import movie.api.dto.ReservationItemRequest
 import movie.api.dto.ReservationItemResponse
 import movie.domain.Point
+import movie.domain.Price
 import movie.domain.discount.DiscountPolicy
 import movie.domain.movie.ReservationCart
+import movie.domain.movie.ReservationRepository
+import movie.domain.movie.ScreeningMovie
 import movie.domain.payment.Payment
 import movie.domain.point.PointPolicy
 import movie.domain.seat.number.Column
 import movie.domain.seat.number.Row
 import movie.domain.seat.number.SeatNumber
-import movie.infrastructure.db.JdbcReservationRepository
 import movie.infrastructure.db.JdbcScreeningRepository
 import org.springframework.stereotype.Service
 import java.time.Duration
@@ -27,7 +30,7 @@ class ScreeningNotFoundException(
 @Service
 class MovieApiService(
     private val screeningRepository: JdbcScreeningRepository,
-    private val reservationRepository: JdbcReservationRepository,
+    private val reservationRepository: ReservationRepository,
     private val discountPolicy: DiscountPolicy,
     private val pointPolicy: PointPolicy,
     private val payment: Payment,
@@ -56,47 +59,84 @@ class MovieApiService(
     }
 
     fun createReservation(request: CreateReservationRequest): CreateReservationResponse {
-        require(request.reservations.isNotEmpty()) { "예매 목록은 비어 있을 수 없습니다." }
+        validateReservationRequest(request)
 
         val movieCatalog = buildMovieCatalog()
+        val reservationCart = buildReservationCart(request, movieCatalog)
+        val totalPrice = calculateTotalPrice(request, reservationCart)
+
+        saveReservations(reservationCart)
+
+        return toCreateReservationResponse(request, totalPrice)
+    }
+
+    private fun validateReservationRequest(request: CreateReservationRequest) {
+        require(request.reservations.isNotEmpty()) { "예매 목록은 비어 있을 수 없습니다." }
+    }
+
+    private fun buildReservationCart(
+        request: CreateReservationRequest,
+        movieCatalog: List<ApiMovie>,
+    ): ReservationCart {
         val reservationCart = ReservationCart()
 
         request.reservations.forEach { reservationRequest ->
-            require(reservationRequest.seats.isNotEmpty()) { "좌석 목록은 비어 있을 수 없습니다." }
-
-            val seatNumbers = reservationRequest.seats.map(::toSeatNumber)
-            require(seatNumbers.distinct().size == seatNumbers.size) { "중복된 좌석은 예매할 수 없습니다." }
-
-            val apiScreening =
-                movieCatalog
-                    .flatMap(ApiMovie::screenings)
-                    .find { it.id == reservationRequest.screeningId }
-                    ?: throw ScreeningNotFoundException(reservationRequest.screeningId)
-
-            val screeningMovie =
-                screeningRepository.findByScreeningId(apiScreening.internalScreeningId)
-                    ?: throw ScreeningNotFoundException(reservationRequest.screeningId)
-
-            require(!reservationCart.isDupTime(screeningMovie.movieTime)) {
-                "선택하신 상영 시간이 겹칩니다. 다른 시간을 선택해 주세요."
-            }
+            val seatNumbers = validateSeatNumbers(reservationRequest)
+            val screeningMovie = findScreeningMovie(reservationRequest, movieCatalog)
 
             reservationCart.addReservation(screeningMovie, seatNumbers)
         }
 
+        return reservationCart
+    }
+
+    private fun validateSeatNumbers(reservationRequest: ReservationItemRequest): List<SeatNumber> {
+        require(reservationRequest.seats.isNotEmpty()) { "좌석 목록은 비어 있을 수 없습니다." }
+
+        val seatNumbers = reservationRequest.seats.map(::toSeatNumber)
+        require(seatNumbers.distinct().size == seatNumbers.size) { "중복된 좌석은 예매할 수 없습니다." }
+
+        return seatNumbers
+    }
+
+    private fun findScreeningMovie(
+        reservationRequest: ReservationItemRequest,
+        movieCatalog: List<ApiMovie>,
+    ): ScreeningMovie {
+        val apiScreening =
+            movieCatalog
+                .flatMap(ApiMovie::screenings)
+                .find { it.id == reservationRequest.screeningId }
+                ?: throw ScreeningNotFoundException(reservationRequest.screeningId)
+
+        return screeningRepository.findByScreeningId(apiScreening.internalScreeningId)
+            ?: throw ScreeningNotFoundException(reservationRequest.screeningId)
+    }
+
+    private fun calculateTotalPrice(
+        request: CreateReservationRequest,
+        reservationCart: ReservationCart,
+    ): Price {
         val usedPoint = Point(request.usedPoints)
         val paymentMethod = request.paymentMethod.toDomain()
         val discountedPrice = reservationCart.calculateDiscountedTotalPrice(discountPolicy)
         val pointAppliedPrice = pointPolicy.usePoint(totalPrice = discountedPrice, usePoint = usedPoint)
-        val totalPrice =
-            payment.paymentPrice(
-                method = paymentMethod,
-                totalPrice = pointAppliedPrice,
-            )
 
+        return payment.paymentPrice(
+            method = paymentMethod,
+            totalPrice = pointAppliedPrice,
+        )
+    }
+
+    private fun saveReservations(reservationCart: ReservationCart) {
         reservationRepository.saveAll(reservationCart.getReservations())
+    }
 
-        return CreateReservationResponse(
+    private fun toCreateReservationResponse(
+        request: CreateReservationRequest,
+        totalPrice: Price,
+    ): CreateReservationResponse =
+        CreateReservationResponse(
             reservationId = reservationIdSequence.incrementAndGet(),
             reservations =
                 request.reservations.map {
@@ -109,7 +149,6 @@ class MovieApiService(
             paymentMethod = request.paymentMethod.name,
             totalPrice = totalPrice.value,
         )
-    }
 
     private fun buildMovieCatalog(): List<ApiMovie> {
         return screeningRepository

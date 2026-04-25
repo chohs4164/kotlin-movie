@@ -11,8 +11,6 @@ class ReservationCart(
 
     fun getReservations(): List<Reservation> = reservations.getReservations()
 
-    fun isDupTime(movieTime: MovieTime): Boolean = reservations.isDupTime(movieTime = movieTime)
-
     fun resetSeat() {
         reservations.reset()
     }
@@ -21,6 +19,12 @@ class ReservationCart(
         screeningMovie: ScreeningMovie,
         seatNumbers: List<SeatNumber>,
     ): Reservation {
+        require(!reservations.isDupTime(screeningMovie.movieTime)) {
+            "선택하신 상영 시간이 겹칩니다. 다른 시간을 선택해 주세요."
+        }
+
+        screeningMovie.reserve(seatNumbers)
+
         val reservation =
             Reservation(
                 screeningMovie = screeningMovie,
@@ -28,7 +32,6 @@ class ReservationCart(
             )
 
         reservations.addReservation(reservation)
-        screeningMovie.addReservedSeats(seatNumbers)
 
         return reservation
     }

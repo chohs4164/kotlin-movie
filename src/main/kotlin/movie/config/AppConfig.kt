@@ -3,6 +3,7 @@ package movie.config
 import movie.MovieFixtures
 import movie.application.MovieCatalogOrder
 import movie.domain.discount.DiscountPolicy
+import movie.domain.movie.ReservationRepository
 import movie.domain.payment.Payment
 import movie.domain.point.PointPolicy
 import movie.infrastructure.db.JdbcReservationRepository
@@ -51,7 +52,7 @@ class AppConfig {
     fun screeningRepository(connection: Connection): JdbcScreeningRepository = JdbcScreeningRepository(connection)
 
     @Bean
-    fun reservationRepository(connection: Connection): JdbcReservationRepository = JdbcReservationRepository(connection)
+    fun reservationRepository(connection: Connection): ReservationRepository = JdbcReservationRepository(connection)
 
     @Bean
     fun reservationIdSequence(): AtomicLong = AtomicLong(0)

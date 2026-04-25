@@ -3,12 +3,14 @@ package movie.controller
 import movie.MovieFixtures
 import movie.domain.Point
 import movie.domain.movie.MovieTitle
-import movie.domain.movie.ScreeningMovie
 import movie.domain.movie.ReservationCart
+import movie.domain.movie.ReservationRepository
+import movie.domain.movie.ScreeningMovie
 import movie.domain.payment.Card
 import movie.domain.payment.Cash
 import movie.domain.payment.PaymentMethod
 import movie.domain.seat.number.SeatNumber
+import movie.infrastructure.db.JdbcScreeningRepository
 import movie.view.InputParser
 import movie.view.InputValidator
 import movie.view.InputView
@@ -17,9 +19,11 @@ import java.time.LocalDate
 import kotlin.uuid.ExperimentalUuidApi
 
 @OptIn(ExperimentalUuidApi::class)
-class MovieController {
-    val movieFixtures = MovieFixtures()
-
+class MovieController(
+    private val screeningRepository: JdbcScreeningRepository,
+    private val reservationRepository: ReservationRepository,
+    private val movieFixtures: MovieFixtures = MovieFixtures(),
+) {
     fun run() {
         val isStart = getReservationStart()
 
@@ -31,14 +35,7 @@ class MovieController {
             val movieTitle = getMovieTitle()
             val movieTimes = getMovieTimes(title = movieTitle)
             OutputView.printMovieStartTimes(movieTimes)
-            val screeningMovie = getScreeningMovie(movieTimes, reservationCart)
-            OutputView.printSeats(screeningMovie = screeningMovie)
-            val selectedSeatNumbers = getSeatNumbers(screeningMovie = screeningMovie)
-            val reservation =
-                reservationCart.addReservation(
-                    screeningMovie = screeningMovie,
-                    seatNumbers = selectedSeatNumbers,
-                )
+            val reservation = getReservation(movieTimes, reservationCart)
             OutputView.printReservationAddMessage(reservation = reservation)
             require(getContinueReservation()) { break }
         }
@@ -59,7 +56,18 @@ class MovieController {
 
         val isPayment = getUserPayment()
 
-        require(isPayment) { reservationCart.resetSeat() }
+        if (!isPayment) {
+            reservationCart.resetSeat()
+            return
+        }
+
+        try {
+            reservationRepository.saveAll(reservationCart.getReservations())
+        } catch (e: IllegalArgumentException) {
+            OutputView.printErrorMessage(e.message)
+            reservationCart.resetSeat()
+            return
+        }
 
         OutputView.printReceipt(
             reservationCart = reservationCart,
@@ -74,7 +82,10 @@ class MovieController {
         whileGetInput {
             val date = getDate()
 
-            movieFixtures.scheduler.getMovies(title = title, date = date)
+            val screeningMovies = screeningRepository.findByTitleAndDate(title, date)
+            require(screeningMovies.isNotEmpty()) { "날짜가 올바르지 않습니다." }
+
+            screeningMovies
         }
 
     fun getReservationStart(): Boolean =
@@ -91,7 +102,7 @@ class MovieController {
 
             val movieTitle = InputParser.parseMovieTitle(input)
 
-            require(movieFixtures.scheduler.containsMovieTitle(movieTitle)) { "상영 중인 영화가 아닙니다." }
+            require(screeningRepository.existsByTitle(movieTitle)) { "상영 중인 영화가 아닙니다." }
 
             movieTitle
         }
@@ -104,21 +115,28 @@ class MovieController {
             InputParser.parseDate(input)
         }
 
-    fun getScreeningMovie(
-        screeningMovies: List<ScreeningMovie>,
-        reservationCart: ReservationCart,
-    ): ScreeningMovie =
+    fun getScreeningMovie(screeningMovies: List<ScreeningMovie>): ScreeningMovie =
         whileGetInput {
             val input = InputView.readSelectedMovieTimeNumber()
             InputValidator.validateNumber(input)
 
             val index = InputParser.parseIndex(input = input, size = screeningMovies.size)
-            val selectedMovie = screeningMovies[index]
-
-            require(!reservationCart.isDupTime(selectedMovie.movieTime)) { throw IllegalArgumentException("선택하신 상영 시간이 겹칩니다. 다른 시간을 선택해 주세요.") }
-
-            selectedMovie
+            screeningMovies[index]
         }
+
+    fun getReservation(
+        screeningMovies: List<ScreeningMovie>,
+        reservationCart: ReservationCart,
+    ) = whileGetInput {
+        val screeningMovie = getScreeningMovie(screeningMovies)
+        OutputView.printSeats(screeningMovie = screeningMovie)
+        val selectedSeatNumbers = getSeatNumbers(screeningMovie = screeningMovie)
+
+        reservationCart.addReservation(
+            screeningMovie = screeningMovie,
+            seatNumbers = selectedSeatNumbers,
+        )
+    }
 
     fun getSeatNumbers(screeningMovie: ScreeningMovie): List<SeatNumber> =
         whileGetInput {
