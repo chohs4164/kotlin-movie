@@ -1,6 +1,5 @@
 package movie.application
 
-import movie.MovieFixtures
 import movie.api.dto.CreateReservationRequest
 import movie.api.dto.CreateReservationResponse
 import movie.api.dto.MovieResponse
@@ -8,7 +7,10 @@ import movie.api.dto.MovieScreeningResponse
 import movie.api.dto.MoviesResponse
 import movie.api.dto.ReservationItemResponse
 import movie.domain.Point
+import movie.domain.discount.DiscountPolicy
 import movie.domain.movie.ReservationCart
+import movie.domain.payment.Payment
+import movie.domain.point.PointPolicy
 import movie.domain.seat.number.Column
 import movie.domain.seat.number.Row
 import movie.domain.seat.number.SeatNumber
@@ -30,7 +32,10 @@ class ReservationConflictException(
 class MovieApiService(
     private val screeningRepository: JdbcScreeningRepository,
     private val reservationRepository: JdbcReservationRepository,
-    private val movieFixtures: MovieFixtures,
+    private val discountPolicy: DiscountPolicy,
+    private val pointPolicy: PointPolicy,
+    private val payment: Payment,
+    private val movieCatalogOrder: MovieCatalogOrder,
     private val reservationIdSequence: AtomicLong,
 ) {
     fun getMovies(): MoviesResponse {
@@ -94,10 +99,10 @@ class MovieApiService(
 
         val usedPoint = Point(request.usedPoints)
         val paymentMethod = request.paymentMethod.toDomain()
-        val discountedPrice = reservationCart.calculateDiscountedTotalPrice(movieFixtures.discountPolicy)
-        val pointAppliedPrice = movieFixtures.pointPolicy.usePoint(totalPrice = discountedPrice, usePoint = usedPoint)
+        val discountedPrice = reservationCart.calculateDiscountedTotalPrice(discountPolicy)
+        val pointAppliedPrice = pointPolicy.usePoint(totalPrice = discountedPrice, usePoint = usedPoint)
         val totalPrice =
-            movieFixtures.payment.paymentPrice(
+            payment.paymentPrice(
                 method = paymentMethod,
                 totalPrice = pointAppliedPrice,
             )
@@ -128,16 +133,11 @@ class MovieApiService(
     }
 
     private fun buildMovieCatalog(): List<ApiMovie> {
-        val titleOrder =
-            movieFixtures.screeningMovieList
-                .map { it.movie.title.value }
-                .distinct()
-
         return screeningRepository
             .findAllMovieScreenings()
             .groupBy { it.title }
             .entries
-            .sortedWith(compareBy({ titleOrder.indexOf(it.key).takeIf { index -> index >= 0 } ?: Int.MAX_VALUE }, { it.key }))
+            .sortedWith(compareBy({ movieCatalogOrder.indexOf(it.key) }, { it.key }))
             .mapIndexed { movieIndex, entry ->
                 val sortedRecords = entry.value.sortedBy { it.startAt }
                 val firstRecord = sortedRecords.first()

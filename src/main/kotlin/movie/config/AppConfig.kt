@@ -1,6 +1,10 @@
 package movie.config
 
 import movie.MovieFixtures
+import movie.application.MovieCatalogOrder
+import movie.domain.discount.DiscountPolicy
+import movie.domain.payment.Payment
+import movie.domain.point.PointPolicy
 import movie.infrastructure.db.JdbcReservationRepository
 import movie.infrastructure.db.JdbcScreeningRepository
 import movie.infrastructure.db.SchemaInitializer
@@ -16,6 +20,24 @@ import java.util.concurrent.atomic.AtomicLong
 class AppConfig {
     @Bean
     fun movieFixtures(): MovieFixtures = MovieFixtures()
+
+    @Bean
+    fun discountPolicy(): DiscountPolicy = DiscountPolicy()
+
+    @Bean
+    fun pointPolicy(): PointPolicy = PointPolicy()
+
+    @Bean
+    fun payment(): Payment = Payment()
+
+    @Bean
+    fun movieCatalogOrder(movieFixtures: MovieFixtures): MovieCatalogOrder =
+        MovieCatalogOrder(
+            titles =
+                movieFixtures.screeningMovieList
+                    .map { it.movie.title.value }
+                    .distinct(),
+        )
 
     @Bean
     fun schemaInitializer(): SchemaInitializer = SchemaInitializer()
